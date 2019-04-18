@@ -26,11 +26,25 @@ CONFIG += c++11
 
 win32: {
     message("win build")
+
     LIBS += opengl32.lib
+
+    INCLUDEPATH += C:/LeapSDK/include
+
+    !contains(QMAKE_HOST.arch, x86_64) {
+        message("win x86 build")
+        LIBS += C:/LeapSDK/lib/x86/Leap.lib
+    } else {
+        message("win x86_64 build")
+        LIBS += C:/LeapSDK/lib/x64/Leap.lib
+    }
 }
 
 macx: {
     message("mac build")
+    INCLUDEPATH += /Users/zclin/Documents/LeapSDK/include
+
+    LIBS += -L/Users/zclin/Documents/LeapSDK/lib/ -lLeap
 }
 
 SOURCES += \

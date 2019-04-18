@@ -5,6 +5,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
+#include <QTimer>
+
+#include "Leap.h"
+
+using namespace Leap;
 
 /************Half-Edge Data Structure*************/
 struct HE_Vert;
@@ -56,6 +61,8 @@ signals:
     void sendScale(float);
     void sendTrans(int);
 
+    void sendController(const Controller&);
+
 private slots:
     void on_actionOpen_triggered();
     void on_xRotSlider_actionTriggered(int action);
@@ -67,8 +74,12 @@ private slots:
     void on_yTranSlider_actionTriggered(int action);
     void on_zTranSlider_actionTriggered(int action);
 
+    void receiveTrigger();
+    void onFrame(const Controller&);
+
 private:
     Ui::MainWindow *ui;
+    Controller controller;
     void readMeshFile(QString);
     void getEdgePair();
     HE_Face *getFaceOppo(HE_Vert*, HE_Vert*);
@@ -76,6 +87,11 @@ private:
     HE_Vert* vert;
     HE_Face* face;
     HE_Edge* edge;
+
+    void onInit(const Controller&);
+    void onConnect(const Controller&);
+
+    QTimer *frameTrigger;
 
 };
 

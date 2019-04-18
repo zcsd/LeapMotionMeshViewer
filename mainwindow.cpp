@@ -12,11 +12,40 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(sendZRot(int)), ui->glShowWidget, SLOT(setZRotation(int)));
     connect(this, SIGNAL(sendScale(float)), ui->glShowWidget, SLOT(setScale(float)));
     connect(this, SIGNAL(sendTrans(int)), ui->glShowWidget, SLOT(setTrans(int)));
+    onInit(controller);
+    onConnect(controller);
 }
 
 MainWindow::~MainWindow()
 {
+    delete frameTrigger;
     delete ui;
+}
+
+void MainWindow::onInit(const Controller &cont)
+{
+    Q_UNUSED(cont);
+    qDebug() << "Init";
+}
+
+void MainWindow::onConnect(const Controller &cont)
+{
+    qDebug() << "connected";
+    cont.enableGesture(Gesture::TYPE_SWIPE);
+}
+
+void MainWindow::onFrame(const Controller &cont)
+{
+    qDebug() << "Frame available";
+
+    const Frame frame = cont.frame();
+
+    qDebug() << "Frame id: " << frame.id()
+             << ", timestamp: " << frame.timestamp()
+             << ", hands: " << frame.hands().count()
+             << ", fingers: " << frame.fingers().count()
+             << ", tools: " << frame.tools().count()
+             << ", gestures: " << frame.gestures().count();
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -30,6 +59,14 @@ void MainWindow::on_actionOpen_triggered()
         readMeshFile(openFilePath);
         sendMesh(face, faceCnt);
         //getEdgePair();
+
+        frameTrigger = new QTimer();
+        frameTrigger->setInterval(15);
+
+        connect(frameTrigger, SIGNAL(timeout()), this, SLOT(receiveTrigger()));
+        connect(this, SIGNAL(sendController(const Controller&)), this, SLOT(onFrame(const Controller&)));
+
+        frameTrigger->start();
     }
 }
 
@@ -221,3 +258,10 @@ void MainWindow::on_zTranSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
 }
+
+void MainWindow::receiveTrigger()
+{
+    qDebug() << "fsdfs";
+    emit sendController(controller);
+}
+
