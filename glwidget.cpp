@@ -90,24 +90,11 @@ void GLWidget::setRotation(int angleX, int angleY, int angleZ)
 
 void GLWidget::setScale(float s)
 {
-    /*
+
     if (qAbs(double(s-scale)) > 0.01) {
         scale = s;
         updateGL();
-    }*/
-    if (s > 1) {
-        scale = preScale + s - 1;
-        if (scale >= 5) scale = 5;
     }
-    else if (s < 1 && s > 0) {
-        scale = preScale - (1 - s);
-        if (scale <= 0.1) scale = 0.1;
-    }
-
-    preScale = scale;
-    qDebug() << "scale in gl:" << scale;
-    //preScale = scale;
-    updateGL();
 }
 
 void GLWidget::setTrans(int tx, int ty, int tz)

@@ -88,7 +88,7 @@ private:
 
     float preTx = 0, preTy = 200, preTz = 0;
     float preRx = 0, preRy = 200, preRz = 0;
-    int angleX = 0, angleY = 0, angleZ = 0;
+    float preSy = 200;
     void doTranslation(float, float, float);
     void doRotation(float, float, float);
     void doScale(float, float, float);

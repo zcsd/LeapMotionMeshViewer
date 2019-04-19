@@ -100,7 +100,6 @@ void MainWindow::onFrame(const Controller &cont)
             doScale(handCenter.x, handCenter.y, handCenter.z);
         }
 
-
 /*
         if (int(firstHandsDistance) == 0) {
             firstHandsDistance = distance;
@@ -315,16 +314,28 @@ void MainWindow::doTranslation(float x, float y, float z)
 
 void MainWindow::doRotation(float x, float y, float z)
 {
-    angleX = (x - preRx) / 5.0;
-    angleY = (y - preRy) / 5.0;
-    angleZ = (z - preRz) / 5.0;
+    float angleX = (x - preRx) / 4;
+    float angleY = (y - preRy) / 4;
+    float angleZ = (z - preRz) / 4;
     qDebug() << "Rotation" << angleX << angleY << angleZ;
-    emit sendRot(angleX, angleY, angleZ);
+    emit sendRot(angleZ, angleY, angleX);
 }
 
 void MainWindow::doScale(float x, float y, float z)
 {
-
+    Q_UNUSED(x);
+    Q_UNUSED(z);
+    float scale;
+    if ( (y - preSy) > 0 ) {
+        scale = 1 + ( (y - preSy) / 60 );
+        if (scale >= 4 ) scale = 4;
+    }
+    else {
+        scale = 1 - ( (preSy - y) / 100);
+        if (scale <= 0.2) scale = 0.2f;
+    }
+    qDebug() << "Scale" << scale;
+    emit sendScale(scale);
 }
 
 void MainWindow::on_xRotSlider_actionTriggered(int action)
