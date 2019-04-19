@@ -55,11 +55,9 @@ public:
 
 signals:
     void sendMesh(HE_Face*, int);
-    void sendXRot(int);
-    void sendYRot(int);
-    void sendZRot(int);
+    void sendRot(int, int, int);
     void sendScale(float);
-    void sendTrans(int);
+    void sendTrans(int, int, int);
 
     void sendController(const Controller&);
 
@@ -88,10 +86,22 @@ private:
     HE_Face* face;
     HE_Edge* edge;
 
+    float preTx = 0, preTy = 200, preTz = 0;
+    float preRx = 0, preRy = 200, preRz = 0;
+    int angleX = 0, angleY = 0, angleZ = 0;
+    void doTranslation(float, float, float);
+    void doRotation(float, float, float);
+    void doScale(float, float, float);
+
     void onInit(const Controller&);
     void onConnect(const Controller&);
 
     QTimer *frameTrigger;
+
+    bool isMotionStop = false;
+    int nonStopGestureFrames = 0;
+    float firstHandsDistance = 0, preDistance = 0;
+    int leftHandConCnt = 0, rightHandConCnt = 0, twoHandsConCnt = 0;
 
 };
 

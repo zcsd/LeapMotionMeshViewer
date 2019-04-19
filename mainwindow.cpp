@@ -7,11 +7,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(this, SIGNAL(sendMesh(HE_Face*, int)), ui->glShowWidget, SLOT(receiveMesh(HE_Face*, int)));
-    connect(this, SIGNAL(sendXRot(int)), ui->glShowWidget, SLOT(setXRotation(int)));
-    connect(this, SIGNAL(sendYRot(int)), ui->glShowWidget, SLOT(setYRotation(int)));
-    connect(this, SIGNAL(sendZRot(int)), ui->glShowWidget, SLOT(setZRotation(int)));
+    connect(this, SIGNAL(sendRot(int, int, int)), ui->glShowWidget, SLOT(setRotation(int, int, int)));
     connect(this, SIGNAL(sendScale(float)), ui->glShowWidget, SLOT(setScale(float)));
-    connect(this, SIGNAL(sendTrans(int)), ui->glShowWidget, SLOT(setTrans(int)));
+    connect(this, SIGNAL(sendTrans(int, int, int)), ui->glShowWidget, SLOT(setTrans(int, int, int)));
     onInit(controller);
     onConnect(controller);
 }
@@ -31,21 +29,104 @@ void MainWindow::onInit(const Controller &cont)
 void MainWindow::onConnect(const Controller &cont)
 {
     qDebug() << "connected";
-    cont.enableGesture(Gesture::TYPE_SWIPE);
+    cont.enableGesture(Gesture::TYPE_CIRCLE);
+    //cont.enableGesture(Gesture::TYPE_SCREEN_TAP);
 }
 
 void MainWindow::onFrame(const Controller &cont)
 {
-    qDebug() << "Frame available";
-
     const Frame frame = cont.frame();
 
-    qDebug() << "Frame id: " << frame.id()
-             << ", timestamp: " << frame.timestamp()
-             << ", hands: " << frame.hands().count()
-             << ", fingers: " << frame.fingers().count()
-             << ", tools: " << frame.tools().count()
-             << ", gestures: " << frame.gestures().count();
+    if (frame.gestures().count() != 0) {
+        if (frame.gestures()[0].type() == Leap::Gesture::TYPE_CIRCLE) {
+            isMotionStop = true;
+            nonStopGestureFrames = 0;
+            firstHandsDistance = 0;
+            preDistance = 0;
+            leftHandConCnt = 0;
+            rightHandConCnt = 0;
+            twoHandsConCnt = 0;
+        }
+    }
+    else {
+        nonStopGestureFrames++;
+        if (nonStopGestureFrames >= 60) {
+            isMotionStop = false;
+            nonStopGestureFrames = 61;
+        }
+    }
+
+    HandList hands = frame.hands();
+
+    if (frame.hands().count() == 1 && isMotionStop == false) {
+        twoHandsConCnt = 0;
+        Hand hand = hands[0];
+        if (hand.isLeft()) {
+            leftHandConCnt++;
+            qDebug() << "1 Left hand is detected.";
+            Vector handCenter = hand.palmPosition();
+            qDebug() << handCenter.x << handCenter.y << handCenter.z;
+            if (leftHandConCnt > 40) {
+                doTranslation(handCenter.x, handCenter.y, handCenter.z);
+            }
+        }
+        else if (hand.isRight()) {
+            rightHandConCnt++;
+            qDebug() << "1 Right hand is detected.";
+            Vector handCenter = hand.palmPosition();
+            qDebug() << handCenter.x << handCenter.y << handCenter.z;
+            if (rightHandConCnt > 40) {
+                doRotation(handCenter.x, handCenter.y, handCenter.z);
+            }
+        }
+    }
+    else if (frame.hands().count() == 2 && isMotionStop == false) {
+        leftHandConCnt = 0;
+        rightHandConCnt = 0;
+        twoHandsConCnt++;
+        qDebug() << "2 hands are detected.";
+        Hand leftHand, rightHand;
+        if (hands[0].isLeft()) {
+            leftHand = hands[0];
+            rightHand = hands[1];
+        }
+        else {
+            leftHand = hands[1];
+            rightHand = hands[0];
+        }
+
+        if (twoHandsConCnt > 20) {
+            Vector handCenter = rightHand.palmPosition();
+            doScale(handCenter.x, handCenter.y, handCenter.z);
+        }
+
+
+/*
+        if (int(firstHandsDistance) == 0) {
+            firstHandsDistance = distance;
+        }
+        else {
+            float scale;
+            if ( (distance - firstHandsDistance) > 15) {
+                scale = 1 + ((distance - firstHandsDistance) / 200);
+                scale = scale * 0.8f;
+            }
+            else if ((distance - firstHandsDistance) < -15){
+                scale = 1 - ((firstHandsDistance - distance) / 200);
+                scale = scale * 0.8f;
+            }
+
+            qDebug() << "new scale:" << scale;
+            //preDistance = distance;
+            emit sendScale(scale);
+        }*/
+    }
+    else if (frame.hands().count() == 0) {
+        qDebug() << "No hands is detected.";
+    }
+    else {
+        qDebug() << "More than two hands are detected.";
+    }
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -61,7 +142,7 @@ void MainWindow::on_actionOpen_triggered()
         //getEdgePair();
 
         frameTrigger = new QTimer();
-        frameTrigger->setInterval(15);
+        frameTrigger->setInterval(30);
 
         connect(frameTrigger, SIGNAL(timeout()), this, SLOT(receiveTrigger()));
         connect(this, SIGNAL(sendController(const Controller&)), this, SLOT(onFrame(const Controller&)));
@@ -214,54 +295,86 @@ HE_Face* MainWindow::getFaceOppo(HE_Vert* inVert1, HE_Vert* inVert2)
     return nullptr;
 }
 
+void MainWindow::doTranslation(float x, float y, float z)
+{
+    float xTFactor = (x - preTx) / 6;
+    float yTFactor = (y - preTy) / 6;
+    float zTFactor = (z - preTz) / 6;
+
+    qDebug() << xTFactor << yTFactor << zTFactor;
+
+    if ( (xTFactor > 1 || xTFactor < -1)
+         || (yTFactor > 1 || yTFactor < -1)
+         || (zTFactor > 1 || zTFactor < -1) ) {
+        ui->xTranSlider->setValue(int(xTFactor));
+        ui->yTranSlider->setValue(int(yTFactor));
+        ui->zTranSlider->setValue(int(zTFactor));
+        emit sendTrans(int(xTFactor), int(yTFactor), int(zTFactor));
+    }
+}
+
+void MainWindow::doRotation(float x, float y, float z)
+{
+    angleX = (x - preRx) / 5.0;
+    angleY = (y - preRy) / 5.0;
+    angleZ = (z - preRz) / 5.0;
+    qDebug() << "Rotation" << angleX << angleY << angleZ;
+    emit sendRot(angleX, angleY, angleZ);
+}
+
+void MainWindow::doScale(float x, float y, float z)
+{
+
+}
+
 void MainWindow::on_xRotSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
     qDebug() << "X Rot:" << ui->xRotSlider->value();
-    sendXRot(ui->xRotSlider->value());
+    //sendXRot(ui->xRotSlider->value());
 }
 
 void MainWindow::on_yRotSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
     qDebug() << "Y Rot:" << ui->yRotSlider->value();
-    sendYRot(ui->yRotSlider->value());
+    //sendYRot(ui->yRotSlider->value());
 }
 
 void MainWindow::on_zRotSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
     qDebug() << "Z Rot:" << ui->zRotSlider->value();
-    sendZRot(ui->zRotSlider->value());
+    //sendZRot(ui->zRotSlider->value());
 }
 
 void MainWindow::on_scaleSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
     qDebug() << "Scale:" << ui->scaleSlider->value();
-    sendScale(float(ui->scaleSlider->value() * 0.1));
+    //sendScale(float(ui->scaleSlider->value() * 0.1));
 }
 
 void MainWindow::on_xTranSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
-    qDebug() << "x Tran:" << ui->xTranSlider->value();
-    sendTrans(ui->xTranSlider->value());
+    emit sendTrans(ui->xTranSlider->value(), ui->xTranSlider->value(), ui->xTranSlider->value());
 }
 
 void MainWindow::on_yTranSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
+    emit sendTrans(ui->xTranSlider->value(), ui->xTranSlider->value(), ui->xTranSlider->value());
 }
 
 void MainWindow::on_zTranSlider_actionTriggered(int action)
 {
     Q_UNUSED(action);
+    emit sendTrans(ui->xTranSlider->value(), ui->xTranSlider->value(), ui->xTranSlider->value());
 }
 
 void MainWindow::receiveTrigger()
 {
-    qDebug() << "fsdfs";
     emit sendController(controller);
 }
 

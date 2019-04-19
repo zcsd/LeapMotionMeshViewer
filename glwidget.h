@@ -27,17 +27,15 @@ protected:
 signals:
 
 public slots:
-    void setXRotation(int);
-    void setYRotation(int);
-    void setZRotation(int);
+    void setRotation(int, int, int);
     void setScale(float);
-    void setTrans(int);
+    void setTrans(int, int, int);
     void receiveMesh(HE_Face*, int);
 
 private:
     int xRot, yRot, zRot;
-    float scale = 1.0;
-    int tran = 0;
+    float preScale = 1.0, scale = 1.0;
+    int tranX = 0, tranY = 0, tranZ = 0;
     bool meshReady = false;
     int faceCnt = 0;
     HE_Face* face;

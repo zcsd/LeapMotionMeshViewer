@@ -74,47 +74,48 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     lastPos = event->pos();*/
 }
 
-void GLWidget::setXRotation(int angle)
+void GLWidget::setRotation(int angleX, int angleY, int angleZ)
 {
     //normalizeAngle(angle);
+    /*
     if (angle != xRot) {
         xRot = angle;
         updateGL();
-    }
-}
-
-void GLWidget::setYRotation(int angle)
-{
-    //normalizeAngle(angle);
-    if (angle != yRot) {
-        yRot = angle;
-        updateGL();
-    }
-}
-
-void GLWidget::setZRotation(int angle)
-{
-    //normalizeAngle(angle);
-    if (angle != zRot) {
-        zRot = angle;
-        updateGL();
-    }
+    }*/
+    xRot = angleX*2;
+    yRot = angleY*2;
+    zRot = angleZ*2;
+    updateGL();
 }
 
 void GLWidget::setScale(float s)
 {
+    /*
     if (qAbs(double(s-scale)) > 0.01) {
         scale = s;
         updateGL();
+    }*/
+    if (s > 1) {
+        scale = preScale + s - 1;
+        if (scale >= 5) scale = 5;
     }
+    else if (s < 1 && s > 0) {
+        scale = preScale - (1 - s);
+        if (scale <= 0.1) scale = 0.1;
+    }
+
+    preScale = scale;
+    qDebug() << "scale in gl:" << scale;
+    //preScale = scale;
+    updateGL();
 }
 
-void GLWidget::setTrans(int t)
+void GLWidget::setTrans(int tx, int ty, int tz)
 {
-    if (t != tran) {
-        tran = t;
-        updateGL();
-    }
+    tranX = tx;
+    tranY = ty;
+    tranZ = tz;
+    updateGL();
 }
 
 void GLWidget::receiveMesh(HE_Face *inFace, int cnt)
@@ -137,9 +138,9 @@ void GLWidget::drawMesh()
 {
     drawXYPlane();
     drawXYZAxis();
-    glScalef(1*scale, 1*scale, 1*scale);
+    glScalef(0.6f*scale, 0.6f*scale, 0.6f*scale);
     glTranslatef(-0.05f, -0.03f, -0.05f);
-    glTranslatef(tran*0.01f, tran*0.01f, tran*0.01f);
+    glTranslatef(tranX*0.01f, tranY*0.01f, tranZ*0.01f);
     HE_Edge* curr;
     if (meshReady) {
         for (int i = 0; i < faceCnt; i++) {
