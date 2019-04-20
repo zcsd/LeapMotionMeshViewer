@@ -3,9 +3,7 @@
 GLWidget::GLWidget(QWidget *parent) :
     QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
-    xRot = 0;
-    yRot = 0;
-    zRot = 0;
+
 }
 
 GLWidget::~GLWidget()
@@ -52,45 +50,16 @@ void GLWidget::resizeGL(int width, int height)
     glMatrixMode(GL_MODELVIEW);
 }
 
-void GLWidget::mousePressEvent(QMouseEvent *event)
-{
-    //lastPos = event->pos();
-}
-
-void GLWidget::mouseMoveEvent(QMouseEvent *event)
-{
-    /*
-    int dx = event->x() - lastPos.x();
-    int dy = event->y() - lastPos.y();
-
-    if (event->buttons() & Qt::LeftButton) {
-        setXRotation(xRot + 8 * dy);
-        setYRotation(yRot + 8 * dx);
-    } else if (event->buttons() & Qt::RightButton) {
-        setXRotation(xRot + 8 * dy);
-        setZRotation(zRot + 8 * dx);
-    }
-
-    lastPos = event->pos();*/
-}
-
 void GLWidget::setRotation(int angleX, int angleY, int angleZ)
 {
-    //normalizeAngle(angle);
-    /*
-    if (angle != xRot) {
-        xRot = angle;
-        updateGL();
-    }*/
-    xRot = angleX*2;
-    yRot = angleY*2;
-    zRot = angleZ*2;
+    xRot = angleX;
+    yRot = angleY;
+    zRot = angleZ;
     updateGL();
 }
 
 void GLWidget::setScale(float s)
 {
-
     if (qAbs(double(s-scale)) > 0.01) {
         scale = s;
         updateGL();
@@ -105,20 +74,24 @@ void GLWidget::setTrans(int tx, int ty, int tz)
     updateGL();
 }
 
+void GLWidget::receiveReset()
+{
+    xRot = 0;
+    yRot = 0;
+    zRot = 0;
+    scale = 1.0;
+    tranX = 0;
+    tranY = 0;
+    tranZ = 0;
+    updateGL();
+}
+
 void GLWidget::receiveMesh(HE_Face *inFace, int cnt)
 {
     meshReady = true;
     face = inFace;
     faceCnt = cnt;
     updateGL();
-}
-
-void GLWidget::normalizeAngle(int &angle)
-{
-    while (angle < 0)
-        angle += 360 * 16;
-    while (angle > 360) //360 * 16
-        angle -= 360 * 16;
 }
 
 void GLWidget::drawMesh()
@@ -131,7 +104,6 @@ void GLWidget::drawMesh()
     HE_Edge* curr;
     if (meshReady) {
         for (int i = 0; i < faceCnt; i++) {
-            //qDebug() << i << face[i].index << face[i]._edge->_vert->index;
             curr = face[i]._edge;
 
             glColor3f(0.2f, 0.7f, 0.2f);
@@ -184,7 +156,7 @@ void GLWidget::drawXYPlane()
 void GLWidget::drawXYZAxis()
 {
     // x
-    glColor3f(1.0,0.0,0.0); // red x
+    glColor3f(1.0,0.0,0.0);
     glBegin(GL_LINES);
         glVertex3f(-0.1f, 0.0f, 0.0f);
         glVertex3f(0.1f, 0.0f, 0.0f);
@@ -197,7 +169,7 @@ void GLWidget::drawXYZAxis()
     glEnd();
 
     // y
-    glColor3f(0.0,1.0,0.0); // green y
+    glColor3f(0.0,1.0,0.0);
     glBegin(GL_LINES);
         glVertex3f(0.0, -0.1f, 0.0f);
         glVertex3f(0.0, 0.1f, 0.0f);
@@ -210,7 +182,7 @@ void GLWidget::drawXYZAxis()
     glEnd();
 
     // z
-    glColor3f(0.0,0.0,1.0); // blue z
+    glColor3f(0.0,0.0,1.0);
     glBegin(GL_LINES);
         glVertex3f(0.0, 0.0f ,-0.1f );
         glVertex3f(0.0, 0.0f ,0.1f );

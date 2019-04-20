@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-    w.setWindowTitle("OpenGL with Qt");
+    w.setWindowTitle("Leap Motion Mesh Viewer");
     w.show();
 
     return a.exec();

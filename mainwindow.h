@@ -1,3 +1,6 @@
+// MainWindow class: contain main control and half-edge parser
+// Author: @ZC
+// Date: created on 02 Apr 2019
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -55,54 +58,44 @@ public:
 
 signals:
     void sendMesh(HE_Face*, int);
+    void sendController(const Controller&);
     void sendRot(int, int, int);
     void sendScale(float);
     void sendTrans(int, int, int);
-
-    void sendController(const Controller&);
+    void sendReset();
 
 private slots:
     void on_actionOpen_triggered();
-    void on_xRotSlider_actionTriggered(int action);
-    void on_yRotSlider_actionTriggered(int action);
-    void on_zRotSlider_actionTriggered(int action);
-    void on_scaleSlider_actionTriggered(int action);
-
-    void on_xTranSlider_actionTriggered(int action);
-    void on_yTranSlider_actionTriggered(int action);
-    void on_zTranSlider_actionTriggered(int action);
-
     void receiveTrigger();
-    void onFrame(const Controller&);
+    void onFrame(const Controller&); // leap motion function
 
 private:
     Ui::MainWindow *ui;
+    QTimer *frameTrigger; // used to loop frames
     Controller controller;
-    void readMeshFile(QString);
-    void getEdgePair();
-    HE_Face *getFaceOppo(HE_Vert*, HE_Vert*);
-    int vertCnt = 0, faceCnt = 0, edgeCnt = 0;
+
     HE_Vert* vert;
     HE_Face* face;
     HE_Edge* edge;
+    int vertCnt = 0, faceCnt = 0, edgeCnt = 0;
 
-    float preTx = 0, preTy = 200, preTz = 0;
-    float preRx = 0, preRy = 200, preRz = 0;
-    float preSy = 200;
+    // default or calibrated position for different motion
+    float preTx = 0, preTy = 200, preTz = 0; // Translation
+    float preRx = 0, preRy = 200, preRz = 0; // Rotation
+    float preSy = 200; // Scale
+
+    bool isMotionStop = false;
+    int nonStopGestureFrames = 0;
+    int leftHandConCnt = 0, rightHandConCnt = 0, twoHandsConCnt = 0;
+
+    void readMeshFile(QString);
     void doTranslation(float, float, float);
     void doRotation(float, float, float);
     void doScale(float, float, float);
 
+    // leap motion function
     void onInit(const Controller&);
     void onConnect(const Controller&);
-
-    QTimer *frameTrigger;
-
-    bool isMotionStop = false;
-    int nonStopGestureFrames = 0;
-    float firstHandsDistance = 0, preDistance = 0;
-    int leftHandConCnt = 0, rightHandConCnt = 0, twoHandsConCnt = 0;
-
 };
 
 #endif // MAINWINDOW_H
