@@ -33,9 +33,8 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -10.0);
-    glRotatef(float(xRot), 1.0, 0.0, 0.0);
-    glRotatef(float(yRot), 0.0, 1.0, 0.0);
-    glRotatef(float(zRot), 0.0, 0.0, 1.0);
+    glRotatef(20, 1.0, 0.0, 0.0);
+    glRotatef(-5, 0.0, 1.0, 0.0);
     drawMesh();
 }
 
@@ -98,7 +97,10 @@ void GLWidget::drawMesh()
 {
     drawXYPlane();
     drawXYZAxis();
-    glScalef(0.6f*scale, 0.6f*scale, 0.6f*scale);
+    glRotatef(float(xRot), 1.0, 0.0, 0.0);
+    glRotatef(float(yRot), 0.0, 1.0, 0.0);
+    glRotatef(float(zRot), 0.0, 0.0, 1.0);
+    glScalef(0.5f*scale, 0.5f*scale, 0.5f*scale);
     glTranslatef(-0.05f, -0.03f, -0.05f);
     glTranslatef(tranX*0.01f, tranY*0.01f, tranZ*0.01f);
     HE_Edge* curr;
@@ -121,7 +123,7 @@ void GLWidget::drawMesh()
 
 void GLWidget::drawXYPlane()
 {
-    glColor3f(0.5f, 0.5f, 0.5f);
+    glColor3f(0.3f, 0.3f, 0.3f);
     glBegin(GL_LINES);
     for (int i = 0; i <= 10; i++) {
         glVertex3f(i*0.1f, 0, 0);

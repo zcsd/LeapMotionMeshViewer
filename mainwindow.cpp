@@ -6,11 +6,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     connect(this, SIGNAL(sendMesh(HE_Face*, int)), ui->glShowWidget, SLOT(receiveMesh(HE_Face*, int)));
     connect(this, SIGNAL(sendRot(int, int, int)), ui->glShowWidget, SLOT(setRotation(int, int, int)));
     connect(this, SIGNAL(sendScale(float)), ui->glShowWidget, SLOT(setScale(float)));
     connect(this, SIGNAL(sendTrans(int, int, int)), ui->glShowWidget, SLOT(setTrans(int, int, int)));
     connect(this, SIGNAL(sendReset()), ui->glShowWidget, SLOT(receiveReset()));
+
     onInit(controller);
     onConnect(controller);
 }
@@ -39,6 +41,7 @@ void MainWindow::onFrame(const Controller &cont)
     const Frame frame = cont.frame();
 
     if (frame.gestures().count() != 0) {
+        // used to stop current motion and store pos
         if (frame.gestures()[0].type() == Leap::Gesture::TYPE_CIRCLE) {
             isMotionStop = true;
             nonStopGestureFrames = 0;
@@ -47,7 +50,7 @@ void MainWindow::onFrame(const Controller &cont)
             twoHandsConCnt = 0;
             qDebug() << "Circle Gesture detected.";
         }
-
+        // used to reset to default pos
         if (frame.gestures()[0].type() == Leap::Gesture::TYPE_SWIPE) {
             isMotionStop = true;
             nonStopGestureFrames = 0;
@@ -97,6 +100,7 @@ void MainWindow::onFrame(const Controller &cont)
         qDebug() << "2 hands are detected.";
 
         Hand leftHand, rightHand;
+        // find left and right hand
         if (hands[0].isLeft()) {
             leftHand = hands[0];
             rightHand = hands[1];
@@ -129,9 +133,9 @@ void MainWindow::on_actionOpen_triggered()
     else {
         readMeshFile(openFilePath);
         sendMesh(face, faceCnt);
-
+        // start a timer to loop frame
         frameTrigger = new QTimer();
-        frameTrigger->setInterval(30);
+        frameTrigger->setInterval(30); //30ms
 
         connect(frameTrigger, SIGNAL(timeout()), this, SLOT(receiveTrigger()));
         connect(this, SIGNAL(sendController(const Controller&)), this, SLOT(onFrame(const Controller&)));
@@ -246,14 +250,11 @@ void MainWindow::doTranslation(float x, float y, float z)
     float yTFactor = (y - preTy) / 6;
     float zTFactor = (z - preTz) / 6;
 
-    qDebug() << "Translation:" << xTFactor << yTFactor << zTFactor;
+    //qDebug() << "Translation:" << xTFactor << yTFactor << zTFactor;
 
     if ( (xTFactor > 1 || xTFactor < -1)
          || (yTFactor > 1 || yTFactor < -1)
          || (zTFactor > 1 || zTFactor < -1) ) {
-        ui->xTranSlider->setValue(int(xTFactor));
-        ui->yTranSlider->setValue(int(yTFactor));
-        ui->zTranSlider->setValue(int(zTFactor));
         emit sendTrans(int(xTFactor), int(yTFactor), int(zTFactor));
     }
 }
@@ -263,11 +264,8 @@ void MainWindow::doRotation(float x, float y, float z)
     float angleX = (x - preRx);
     float angleY = (y - preRy);
     float angleZ = (z - preRz);
-    qDebug() << "Rotation:" << angleX << angleY << angleZ;
+    //qDebug() << "Rotation:" << angleX << angleY << angleZ;
 
-    ui->xRotSlider->setValue(int(angleZ));
-    ui->yRotSlider->setValue(int(angleY));
-    ui->zRotSlider->setValue(int(angleX));
     emit sendRot(int(angleZ), int(angleY), int(angleX));
 }
 
@@ -276,7 +274,7 @@ void MainWindow::doScale(float x, float y, float z)
     Q_UNUSED(x);
     Q_UNUSED(z);
     float scale;
-
+    // distance from right hand to origin
     if ( (y - preSy) > 0 ) {
         scale = 1 + ( (y - preSy) / 60 );
         if (scale >= 4 ) scale = 4;
@@ -286,9 +284,8 @@ void MainWindow::doScale(float x, float y, float z)
         if (double(scale) <= 0.2) scale = 0.2f;
     }
 
-    qDebug() << "Scale:" << scale;
+    //qDebug() << "Scale:" << scale;
 
-    ui->scaleSlider->setValue(int(scale*10));
     emit sendScale(scale);
 }
 
